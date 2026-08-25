@@ -1,9 +1,1 @@
-{
-  "name": "ecena-netlify-securise",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "firebase-admin": "^14.3.0"
-  }
-}
+{ "name": "ecena-netlify-securise", "private": true, "version": "1.0.0", "type": "module", "dependencies": { "firebase-admin": "^14.3.0" }, "overrides": { "jose": "4.15.9" } }
