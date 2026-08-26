@@ -3,7 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 
 const ACTIONS_AUTORISEES = new Set([
   'lire', 'stats', 'ajouter', 'ajouterDonLibre', 'donLibreDetail',
-  'rapportComplet', 'smsJamaisPayes', 'smsRetardMois', 'smsConfirmation',
+  'rapportComplet', 'smsJamaisPayes', 'smsRetardMois', 'smsIncomplet', 'smsConfirmation',
   'smsPreview', 'smsHistorique', 'smsManuel', 'updateVersement',
   'updateMembre', 'deleteMembre', 'saveEmail', 'envoyerEmailVers'
 ]);
