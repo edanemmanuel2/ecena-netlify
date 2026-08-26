@@ -416,10 +416,13 @@ html,body { background:linear-gradient(145deg,#EEF2F7 0%,#F8F6F1 100%); }
           <div class="card-body">
             <p style="font-size:13px;color:#777;margin-bottom:14px;line-height:1.6;">
               La relance <b>« Jamais payé »</b> part automatiquement chaque mardi à 12h.<br>
+              La relance <b>« Versement incomplet »</b> part automatiquement chaque mercredi à 12h.<br>
               La relance <b>« Retard du mois en cours »</b> se déclenche manuellement ci-dessous.
             </p>
             <button class="btn" style="background:#EEE;color:#333;width:100%;margin-bottom:10px;" onclick="chargerApercuSMS()">🔍 Voir l'aperçu (combien de personnes concernées)</button>
             <div id="smsApercu" style="margin-bottom:14px;"></div>
+            <button class="btn btn-navy" style="background:linear-gradient(135deg,#B8860B,#DAA520);width:100%;margin-bottom:10px;" onclick="lancerSMSIncomplet()">📨 Envoyer la relance « Versement incomplet »</button>
+            <div id="smsIncompletResult" style="margin-top:2px;margin-bottom:10px;font-size:13px;text-align:center;"></div>
             <button class="btn btn-navy" style="background:linear-gradient(135deg,#C0392B,#E74C3C);width:100%;" onclick="lancerSMSRetardMois()">📨 Envoyer la relance « Retard du mois en cours »</button>
             <div id="smsRetardResult" style="margin-top:12px;font-size:13px;text-align:center;"></div>
           </div>
@@ -981,6 +984,10 @@ async function chargerApercuSMS(){
           <div class="apercu-lbl">Jamais payé</div>
         </div>
         <div class="apercu-card">
+          <div class="apercu-val">${d.versementIncomplet.total}</div>
+          <div class="apercu-lbl">Incomplet${d.versementIncomplet.mois ? ' — ' + d.versementIncomplet.mois : ''}</div>
+        </div>
+        <div class="apercu-card">
           <div class="apercu-val">${d.retardMoisEnCours.total}</div>
           <div class="apercu-lbl">En retard${d.retardMoisEnCours.mois ? ' — ' + d.retardMoisEnCours.mois : ''}</div>
         </div>
@@ -996,6 +1003,25 @@ async function lancerSMSRetardMois(){
   resultEl.innerHTML = '<span style="color:#888;">Envoi en cours, cela peut prendre quelques instants...</span>';
   try{
     const r = await apiFetch(API+'?action=smsRetardMois');
+    const d = await r.json();
+    if(d.success !== false){
+      resultEl.innerHTML = `<span style="color:#27AE60;font-weight:700;">✅ ${d.envoyes||0} SMS envoyés${d.echecs ? ' (' + d.echecs + ' échecs)' : ''}</span>`;
+      toast('✅ Relance envoyée','s');
+      chargerHistoriqueSMS();
+    } else {
+      resultEl.innerHTML = `<span style="color:#C0392B;">❌ ${d.error||'Erreur'}</span>`;
+    }
+  }catch(e){
+    resultEl.innerHTML = '<span style="color:#C0392B;">❌ Connexion impossible</span>';
+  }
+}
+
+async function lancerSMSIncomplet(){
+  const resultEl = document.getElementById('smsIncompletResult');
+  if(!confirm('Envoyer la relance SMS "Versement incomplet" à tous les membres concernés ?')) return;
+  resultEl.innerHTML = '<span style="color:#888;">Envoi en cours, cela peut prendre quelques instants...</span>';
+  try{
+    const r = await apiFetch(API+'?action=smsIncomplet');
     const d = await r.json();
     if(d.success !== false){
       resultEl.innerHTML = `<span style="color:#27AE60;font-weight:700;">✅ ${d.envoyes||0} SMS envoyés${d.echecs ? ' (' + d.echecs + ' échecs)' : ''}</span>`;
@@ -1227,6 +1253,7 @@ window.genererRapportPDF = genererRapportPDF;
 window.envoyerSMSManuelUI = envoyerSMSManuelUI;
 window.chargerApercuSMS = chargerApercuSMS;
 window.lancerSMSRetardMois = lancerSMSRetardMois;
+window.lancerSMSIncomplet = lancerSMSIncomplet;
 window.chargerHistoriqueSMS = chargerHistoriqueSMS;
 window.toggleSMSMsg = toggleSMSMsg;
 window.loadListe = loadListe;
