@@ -36,8 +36,9 @@ export default async (request) => {
   let utilisateur;
   try {
     utilisateur = await firebaseAuth().verifyIdToken(token, true);
-  } catch (_) {
-    return json({ success: false, error: 'Session invalide ou expiree' }, 401);
+  } catch (e) {
+    console.error('ECENA_AUTH_DEBUG', e && e.message ? e.message : e);
+    return json({ success: false, error: 'Session invalide ou expiree', debug: (e && e.message) || String(e) }, 401);
   }
 
   const autorises = (process.env.ECENA_ALLOWED_EMAILS || '')
