@@ -421,6 +421,8 @@ html,body { background:linear-gradient(145deg,#EEF2F7 0%,#F8F6F1 100%); }
             </p>
             <button class="btn" style="background:#EEE;color:#333;width:100%;margin-bottom:10px;" onclick="chargerApercuSMS()">🔍 Voir l'aperçu (combien de personnes concernées)</button>
             <div id="smsApercu" style="margin-bottom:14px;"></div>
+            <button class="btn btn-navy" style="background:linear-gradient(135deg,#2E86C1,#5DADE2);width:100%;margin-bottom:10px;" onclick="lancerSMSJamaisPaye()">📨 Envoyer la relance « Jamais payé »</button>
+            <div id="smsJamaisPayeResult" style="margin-top:2px;margin-bottom:10px;font-size:13px;text-align:center;"></div>
             <button class="btn btn-navy" style="background:linear-gradient(135deg,#B8860B,#DAA520);width:100%;margin-bottom:10px;" onclick="lancerSMSIncomplet()">📨 Envoyer la relance « Versement incomplet »</button>
             <div id="smsIncompletResult" style="margin-top:2px;margin-bottom:10px;font-size:13px;text-align:center;"></div>
             <button class="btn btn-navy" style="background:linear-gradient(135deg,#C0392B,#E74C3C);width:100%;" onclick="lancerSMSRetardMois()">📨 Envoyer la relance « Retard du mois en cours »</button>
@@ -997,6 +999,25 @@ async function chargerApercuSMS(){
   }
 }
 
+async function lancerSMSJamaisPaye(){
+  const resultEl = document.getElementById('smsJamaisPayeResult');
+  if(!confirm('Envoyer la relance SMS "Jamais payé" à tous les membres concernés ?')) return;
+  resultEl.innerHTML = '<span style="color:#888;">Envoi en cours, cela peut prendre quelques instants...</span>';
+  try{
+    const r = await apiFetch(API+'?action=smsJamaisPayes');
+    const d = await r.json();
+    if(d.success !== false){
+      resultEl.innerHTML = `<span style="color:#27AE60;font-weight:700;">✅ ${d.envoyes||0} SMS envoyés${d.echecs ? ' (' + d.echecs + ' échecs)' : ''}</span>`;
+      toast('✅ Relance envoyée','s');
+      chargerHistoriqueSMS();
+    } else {
+      resultEl.innerHTML = `<span style="color:#C0392B;">❌ ${d.error||'Erreur'}</span>`;
+    }
+  }catch(e){
+    resultEl.innerHTML = '<span style="color:#C0392B;">❌ Connexion impossible</span>';
+  }
+}
+
 async function lancerSMSRetardMois(){
   const resultEl = document.getElementById('smsRetardResult');
   if(!confirm('Envoyer la relance SMS "Retard du mois en cours" à tous les membres concernés ?')) return;
@@ -1252,6 +1273,7 @@ window.loadDonLibreDetail = loadDonLibreDetail;
 window.genererRapportPDF = genererRapportPDF;
 window.envoyerSMSManuelUI = envoyerSMSManuelUI;
 window.chargerApercuSMS = chargerApercuSMS;
+window.lancerSMSJamaisPaye = lancerSMSJamaisPaye;
 window.lancerSMSRetardMois = lancerSMSRetardMois;
 window.lancerSMSIncomplet = lancerSMSIncomplet;
 window.chargerHistoriqueSMS = chargerHistoriqueSMS;
