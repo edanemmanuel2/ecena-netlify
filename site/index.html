@@ -870,7 +870,14 @@ async function saveVMulti(id){
     if(moisPositifs.length){
       const montantTotal = moisPositifs.reduce((a,c)=>a+c.montant,0);
       const moisListe = moisPositifs.map(c=>c.mois).join(',');
-      await apiFetch(API+'?'+new URLSearchParams({action:'confirmerVersementMulti',id,moisListe,montantTotal})).catch(function(){});
+      const r3 = await apiFetch(API+'?'+new URLSearchParams({action:'confirmerVersementMulti',id,moisListe,montantTotal}));
+      const d3 = await r3.json();
+      if(!d3.success){
+        toast('⚠️ Mois enregistrés, mais la notification a échoué : '+(d3.error||'erreur inconnue'),'e');
+        closeModal();
+        loadListe();
+        return;
+      }
     }
     toast('✅ '+moisChanges.length+' mois mis à jour, 1 seule notification envoyée','s');
     closeModal();
