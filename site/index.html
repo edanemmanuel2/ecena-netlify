@@ -819,8 +819,65 @@ function buildDet(r,p){
     <table class="vtbl"><thead><tr><th>Mois</th><th>Versement</th><th></th></tr></thead><tbody>${vrows}</tbody></table>
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
       <button onclick="openEditM('${r.id}')" class="btn btn-navy btn-sm">✏️ Modifier</button>
+      <button onclick="openEditMulti('${r.id}','${r.palier}')" class="btn btn-sm" style="background:linear-gradient(135deg,#B8860B,#DAA520);color:#0D1B2A;font-weight:700;">💰 Paiement multi-mois</button>
       <button onclick="delM('${r.id}','${r.nom}')" class="btn btn-red btn-sm">🗑️ Supprimer</button>
     </div>`;
+}
+
+// ── PAIEMENT MULTI-MOIS ──
+// Permet de saisir plusieurs mois d'un coup pour un seul versement reel
+// (ex: la personne paie 3 mois en une fois) et n'envoie qu'UNE SEULE
+// notification (SMS + email) a la fin, au lieu d'une par mois.
+function openEditMulti(id, palier){
+  const r = allRows.find(x=>x.id===id); if(!r) return;
+  const mensuel = PM[palier]?.m || 0;
+  const rows = (r.versements||[]).map((v,i)=>{
+    v = parseFloat(v)||0;
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="width:90px;font-size:12px;color:#888;">${MOIS[i]}</span>
+      <input id="mm_${i+1}" type="number" value="${v||''}" placeholder="${f(mensuel)}" style="flex:1;padding:6px 8px;font-size:14px;">
+    </div>`;
+  }).join('');
+  openModal(`<div class="modal-title">💰 Paiement multi-mois</div>
+    <p style="font-size:13px;color:#888;margin-bottom:14px;">Membre <b>${id}</b> — modifiez uniquement les mois concernés par ce paiement. Une seule notification sera envoyée pour l'ensemble.</p>
+    ${rows}
+    <button class="btn btn-green mt8" onclick="saveVMulti('${id}')">💾 Enregistrer et notifier une seule fois</button>
+    <button class="btn btn-outline mt8" onclick="closeModal()">Annuler</button>`);
+}
+
+async function saveVMulti(id){
+  const r = allRows.find(x=>x.id===id); if(!r) return;
+  const ancien = r.versements||[];
+  const moisChanges = [];
+  for(let i=1;i<=10;i++){
+    const val = document.getElementById('mm_'+i).value;
+    const nouveauMontant = val===''?0:parseFloat(val);
+    const ancienMontant = parseFloat(ancien[i-1])||0;
+    if(nouveauMontant !== ancienMontant){
+      moisChanges.push({mois:i, montant:nouveauMontant});
+    }
+  }
+  if(!moisChanges.length){toast('Aucun changement détecté','e');return;}
+  toast('Enregistrement en cours...','l');
+  try{
+    for(const c of moisChanges){
+      const r2 = await apiFetch(API+'?'+new URLSearchParams({action:'updateVersement',id,mois:c.mois,montant:c.montant,silencieux:'1'}));
+      const d2 = await r2.json();
+      if(!d2.success){toast('❌ Erreur sur '+MOIS[c.mois-1]+' : '+(d2.error||''),'e');return;}
+    }
+    // Une seule notification groupee, pour les mois ou un montant > 0 a ete saisi
+    const moisPositifs = moisChanges.filter(c=>c.montant>0);
+    if(moisPositifs.length){
+      const montantTotal = moisPositifs.reduce((a,c)=>a+c.montant,0);
+      const moisListe = moisPositifs.map(c=>c.mois).join(',');
+      await apiFetch(API+'?'+new URLSearchParams({action:'confirmerVersementMulti',id,moisListe,montantTotal})).catch(function(){});
+    }
+    toast('✅ '+moisChanges.length+' mois mis à jour, 1 seule notification envoyée','s');
+    closeModal();
+    loadListe();
+  }catch(e){
+    toast('❌ Connexion impossible','e');
+  }
 }
 
 function togDet(id){ document.getElementById('d_'+id).classList.toggle('open'); }
@@ -1266,6 +1323,8 @@ window.closeModal = closeModal;
 window.goSec = goSec;
 window.togDet = togDet;
 window.openEditV = openEditV;
+window.openEditMulti = openEditMulti;
+window.saveVMulti = saveVMulti;
 window.openEditM = openEditM;
 window.enregistrer = enregistrer;
 window.ajouterDonLibre = ajouterDonLibre;
