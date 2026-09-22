@@ -5,7 +5,8 @@ const ACTIONS_AUTORISEES = new Set([
   'lire', 'stats', 'ajouter', 'ajouterDonLibre', 'donLibreDetail',
   'rapportComplet', 'smsJamaisPayes', 'smsRetardMois', 'smsIncomplet', 'smsConfirmation',
   'smsPreview', 'smsHistorique', 'smsManuel', 'updateVersement', 'confirmerVersementMulti',
-  'updateMembre', 'deleteMembre', 'saveEmail', 'envoyerEmailVers'
+  'updateMembre', 'deleteMembre', 'saveEmail', 'envoyerEmailVers',
+  'listeJamaisPayes', 'listeRetardMois', 'solderMembre'
 ]);
 
 function firebaseAuth() {
